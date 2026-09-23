@@ -34,18 +34,18 @@ Na tela de login há o botão **“Usar conta de demonstração”**, que preenc
 
 **`Cannot find native binding` / `Cannot find module '@tailwindcss/oxide-win32-x64-msvc'`**
 
-O npm não instalou o binário do Tailwind para o seu sistema (bug conhecido do npm com
-dependências opcionais). Pare o `npm run dev` (Ctrl + C) e reinstale do zero. No PowerShell:
+Quase sempre é um **npm antigo** (ex.: npm 9 junto com Node 24), que tem um bug e não baixa os
+arquivos do Tailwind específicos do Windows. Confira com `npm -v`: o ideal é npm 10 ou 11.
+Pare o `npm run dev` (Ctrl + C) e, no PowerShell:
 
 ```powershell
-npm config get omit          # se aparecer "optional", rode: npm config delete omit
 Remove-Item -Recurse -Force node_modules, .next
-npm install
+npx -y npm@11 install      # instala usando o npm 11, sem precisar de administrador
 npm run dev
 ```
 
-No Prompt de Comando (cmd): `rmdir /s /q node_modules .next` no lugar do `Remove-Item`.
-Se ainda falhar, apague também o `package-lock.json` antes do `npm install`.
+Para corrigir de vez no computador: `npm install -g npm@latest` (pode pedir administrador).
+No Prompt de Comando (cmd), troque o `Remove-Item` por `rmdir /s /q node_modules .next`.
 
 ---
 
