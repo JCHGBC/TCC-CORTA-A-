@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProgressBar, SegmentedControl } from "@/components/ui/misc";
 import { Modal } from "@/components/ui/modal";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { goalProgress } from "@/lib/finance";
 import { formatCurrency } from "@/lib/formatters";
 import { maskCurrency, parseCurrency, withMask } from "@/lib/masks";
@@ -23,7 +22,6 @@ interface GoalMovementModalProps {
 
 /** Guardar ou retirar dinheiro de uma meta. */
 export function GoalMovementModal({ goal, onClose }: GoalMovementModalProps) {
-  const user = useCurrentUser();
   const {
     register,
     control,
@@ -41,7 +39,7 @@ export function GoalMovementModal({ goal, onClose }: GoalMovementModalProps) {
 
   async function onSubmit(values: GoalMovementFormValues) {
     try {
-      const updated = await goalService.move(user.id, goal.id, values.operation, parseCurrency(values.amount));
+      const updated = await goalService.move(goal.id, values.operation, parseCurrency(values.amount));
       if (updated.currentAmount >= updated.targetAmount && goal.currentAmount < goal.targetAmount) {
         notify.success("Parabéns! Meta alcançada! 🎉", `Você concluiu "${goal.name}".`);
       } else {

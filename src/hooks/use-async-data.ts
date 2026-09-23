@@ -33,14 +33,15 @@ export function useAsyncData<T>(fetcher: () => Promise<T>) {
     };
   }, [fetcher, reloadToken]);
 
-  // Atualização automática quando algo muda (nesta aba ou em outra aba do navegador)
+  // Atualização automática: depois de qualquer alteração e ao voltar para a aba
+  // (os dados podem ter mudado em outro dispositivo)
   useEffect(() => {
     const refresh = () => setReloadToken((token) => token + 1);
     window.addEventListener(DATA_CHANGED_EVENT, refresh);
-    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
     return () => {
       window.removeEventListener(DATA_CHANGED_EVENT, refresh);
-      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, []);
 

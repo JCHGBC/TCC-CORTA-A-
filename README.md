@@ -8,21 +8,53 @@ o saldo, consulta relatórios e acompanha metas financeiras, **sem integração 
 >
 > **Equipe:** Julio Cesar Heinzen · Gabriel Balin Cabral · Enzo Guilherme Janz Frainer · Vinicius dos Reis
 
+| Parte       | Tecnologia                                              | Pasta       |
+| ----------- | ------------------------------------------------------- | ----------- |
+| Front-end   | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4     | `src/`      |
+| Back-end    | PHP 8.1+ (API REST, sem framework)                      | `backend/`  |
+| Banco       | MySQL 8 / MariaDB 10.4+ (o do XAMPP funciona)           | `backend/database/` |
+
 ---
 
-## 🚀 Como rodar
+## 🚀 Como rodar (Windows + XAMPP)
 
-Pré-requisitos: **Node.js 20+** e npm.
+Pré-requisitos: **Node.js 20+** com **npm 10+**, e o **XAMPP** (traz PHP e MySQL).
 
-```bash
-npm install      # instala as dependências
-npm run dev      # ambiente de desenvolvimento em http://localhost:3000
-npm run build    # gera a versão de produção
-npm start        # roda a versão de produção
-npm run lint     # verifica o padrão do código
+### 1. Ligar o MySQL
+Abra o **XAMPP Control Panel** e clique em **Start** no **MySQL**. (O Apache não é necessário.)
+
+### 2. Criar o banco de dados (só na primeira vez)
+Na pasta do projeto, no PowerShell:
+
+```powershell
+C:\xampp\php\php.exe backend\database\setup.php
 ```
 
-**Conta de demonstração** (já vem com 6 meses de dados e metas):
+Isso cria o banco `corta_ai`, as tabelas e a **conta de demonstração** com 6 meses de dados.
+Alternativa: no **phpMyAdmin** (http://localhost/phpmyadmin) → aba **Importar** → arquivo
+`backend/database/schema.sql` (cria só as tabelas, sem a conta demo).
+
+### 3. Ligar a API (PHP) — deixe este terminal aberto
+
+```powershell
+C:\xampp\php\php.exe -S 127.0.0.1:8000 -t backend/public backend/public/index.php
+```
+
+Teste no navegador: http://127.0.0.1:8000/api/health → deve aparecer `{"status":"ok"}`.
+
+### 4. Ligar o site — em outro terminal
+
+```powershell
+npm install      # só na primeira vez
+npm run dev
+```
+
+Abra **http://localhost:3000**.
+
+> 💡 Se você colocar `C:\xampp\php` no **PATH** do Windows, pode usar os atalhos
+> `npm run db:setup` (passo 2) e `npm run api` (passo 3).
+
+**Conta de demonstração:**
 
 | E-mail             | Senha      |
 | ------------------ | ---------- |
@@ -30,13 +62,29 @@ npm run lint     # verifica o padrão do código
 
 Na tela de login há o botão **“Usar conta de demonstração”**, que preenche os campos.
 
+### Configuração do banco
+Por padrão a API usa o MySQL do XAMPP: `127.0.0.1:3306`, usuário `root`, **sem senha**, banco
+`corta_ai`. Se o seu MySQL tiver senha, crie o arquivo `backend/config/config.local.php`
+(ele não vai para o GitHub):
+
+```php
+<?php return ['db' => ['user' => 'root', 'pass' => 'sua-senha']];
+```
+
+Para **apagar tudo e recriar** o banco com os dados de exemplo: `php backend/database/setup.php --reset`.
+
 ### Problemas comuns
 
-**`Cannot find native binding` / `Cannot find module '@tailwindcss/oxide-win32-x64-msvc'`**
+**“Não foi possível conectar ao servidor. Verifique se a API (PHP) e o MySQL estão ligados.”**
+O terminal da API (passo 3) está fechado, ou o MySQL não está ligado no XAMPP.
 
+**“Não foi possível conectar ao banco de dados…”** O MySQL está desligado, o banco não foi
+criado (passo 2) ou a senha está errada (veja *Configuração do banco*).
+
+**`Cannot find native binding` / `Cannot find module '@tailwindcss/oxide-win32-x64-msvc'`**
 Quase sempre é um **npm antigo** (ex.: npm 9 junto com Node 24), que tem um bug e não baixa os
-arquivos do Tailwind específicos do Windows. Confira com `npm -v`: o ideal é npm 10 ou 11.
-Pare o `npm run dev` (Ctrl + C) e, no PowerShell:
+arquivos do Tailwind específicos do Windows. Confira com `npm -v`. Pare o `npm run dev`
+(Ctrl + C) e, no PowerShell:
 
 ```powershell
 Remove-Item -Recurse -Force node_modules, .next
@@ -45,88 +93,81 @@ npm run dev
 ```
 
 Para corrigir de vez no computador: `npm install -g npm@latest` (pode pedir administrador).
-No Prompt de Comando (cmd), troque o `Remove-Item` por `rmdir /s /q node_modules .next`.
 
 ---
 
 ## 🧰 Tecnologias
 
-| Item                         | Ferramenta                                                          |
-| ---------------------------- | ------------------------------------------------------------------- |
-| Framework                    | [Next.js 16](https://nextjs.org) (App Router) + React 19            |
-| Linguagem                    | TypeScript                                                          |
-| Estilo / layout responsivo   | [Tailwind CSS 4](https://tailwindcss.com)                           |
-| Ícones                       | [lucide-react](https://lucide.dev)                                  |
-| Formulários                  | [react-hook-form](https://react-hook-form.com)                      |
-| Validações                   | [zod](https://zod.dev)                                              |
-| Mensagens de feedback (toast)| [sonner](https://sonner.emilkowal.ski)                              |
-| Gráficos                     | [Recharts](https://recharts.org)                                    |
-| Máscaras de entrada          | Implementação própria em `src/lib/masks.ts` (moeda, telefone, data) |
+| Item                          | Ferramenta                                                          |
+| ----------------------------- | ------------------------------------------------------------------- |
+| Framework front-end           | [Next.js 16](https://nextjs.org) (App Router) + React 19            |
+| Linguagem front-end           | TypeScript                                                          |
+| Estilo / layout responsivo    | [Tailwind CSS 4](https://tailwindcss.com)                           |
+| Ícones                        | [lucide-react](https://lucide.dev)                                  |
+| Formulários                   | [react-hook-form](https://react-hook-form.com)                      |
+| Validações (front)            | [zod](https://zod.dev)                                              |
+| Mensagens de feedback (toast) | [sonner](https://sonner.emilkowal.ski)                              |
+| Gráficos                      | [Recharts](https://recharts.org)                                    |
+| Máscaras de entrada           | Implementação própria em `src/lib/masks.ts` (moeda, telefone)       |
+| API                           | PHP 8.1+ puro, PDO (prepared statements), `password_hash` (bcrypt)  |
+| Banco de dados                | MySQL / MariaDB                                                     |
 
 ---
 
 ## 🗂️ Organização das pastas (arquitetura)
 
 ```
-src/
-├── app/                      # ROTAS (Next.js App Router) — só "casca" das páginas
-│   ├── (auth)/               # grupo de rotas públicas de autenticação
-│   │   ├── login/            #   /login
-│   │   ├── cadastro/         #   /cadastro
-│   │   └── recuperar-senha/  #   /recuperar-senha
-│   ├── (app)/                # grupo de rotas protegidas (exige login)
-│   │   ├── dashboard/        #   /dashboard  — painel
-│   │   ├── entradas/         #   /entradas   — RF-03
-│   │   ├── saidas/           #   /saidas     — RF-04
-│   │   ├── historico/        #   /historico
-│   │   ├── metas/            #   /metas      — RF-05
-│   │   ├── relatorios/       #   /relatorios
-│   │   ├── categorias/       #   /categorias
-│   │   └── perfil/           #   /perfil
-│   ├── page.tsx              # landing page (/)
-│   ├── not-found.tsx         # página 404
-│   ├── error.tsx             # tela de erro inesperado
-│   ├── layout.tsx            # layout raiz (fonte, metadados)
-│   └── providers.tsx         # provedores globais (sessão + toasts)
+├── backend/                      # API REST em PHP
+│   ├── config/config.php         #   configurações (banco, sessão, CORS)
+│   ├── database/
+│   │   ├── schema.sql            #   script de criação das tabelas
+│   │   └── setup.php             #   cria o banco + conta de demonstração
+│   ├── public/
+│   │   ├── index.php             #   ponto de entrada (toda requisição passa aqui)
+│   │   └── .htaccess             #   para rodar no Apache, se preferir
+│   └── src/
+│       ├── Core/                 #   Router, Request, Response, Database (PDO), Validator
+│       ├── Models/               #   consultas SQL: User, Session, Category, Transaction, Goal
+│       ├── Controllers/          #   regras de cada endpoint (valida → chama o model → responde)
+│       ├── routes.php            #   lista de todas as rotas da API
+│       └── bootstrap.php         #   autoload das classes e configurações
 │
-├── components/               # COMPONENTES REUTILIZÁVEIS
-│   ├── ui/                   # Button, Input, Select, Modal, Card, feedback (Spinner, Skeleton,
-│   │                         # EmptyState, ErrorState), ConfirmDialog, ColorPicker...
-│   ├── layout/               # AppShell (menu lateral, barra superior, menu mobile)
-│   └── shared/               # Logo, PageHeader, StatCard, MonthSelector
+├── src/                          # FRONT-END (Next.js)
+│   ├── app/                      #   ROTAS (App Router) — só a "casca" das páginas
+│   │   ├── (auth)/               #     /login, /cadastro, /recuperar-senha
+│   │   ├── (app)/                #     área logada: /dashboard, /entradas, /saidas, /historico,
+│   │   │                         #     /metas, /relatorios, /categorias, /perfil
+│   │   ├── page.tsx              #     landing page (/)
+│   │   └── not-found.tsx, error.tsx, layout.tsx, providers.tsx
+│   ├── components/               #   componentes reutilizáveis (ui/, layout/, shared/)
+│   ├── features/                 #   telas por funcionalidade (auth, dashboard, transactions,
+│   │                             #   goals, categories, reports, profile, landing)
+│   ├── services/                 #   ÚNICA parte que conversa com a API (http.ts + *.service.ts)
+│   ├── hooks/                    #   useAsyncData (carregando/erro/sucesso), useDebouncedValue
+│   ├── lib/                      #   máscaras, formatadores, validações, cálculos financeiros
+│   ├── config/                   #   constantes e itens do menu
+│   └── types/                    #   tipos TypeScript do domínio
 │
-├── features/                 # MÓDULOS POR FUNCIONALIDADE (telas + componentes específicos)
-│   ├── auth/                 # login, cadastro, recuperar senha, contexto de sessão, guards
-│   ├── dashboard/            # painel
-│   ├── transactions/         # entradas, saídas, histórico, formulário de movimentação
-│   ├── goals/                # metas
-│   ├── categories/           # categorias (origem dos valores)
-│   ├── reports/              # relatórios e gráficos
-│   ├── profile/              # perfil do usuário
-│   └── landing/              # página inicial pública
-│
-├── services/                 # CAMADA DE DADOS (única parte que acessa os dados)
-├── hooks/                    # hooks genéricos (useAsyncData, useDebouncedValue)
-├── lib/                      # utilitários: máscaras, formatadores, validações, cálculos
-├── config/                   # constantes e itens do menu
-└── types/                    # tipos TypeScript do domínio (User, Transaction, Goal...)
+└── docs/                         # backlog, casos de uso, banco de dados, API
 ```
 
-### Fluxo de dados
+### Como as partes conversam
 
 ```
-Tela (features/*)  →  hook (useAsyncData)  →  service (services/*)  →  armazenamento
+Navegador ──► Next.js (localhost:3000) ──/api/*──► PHP (127.0.0.1:8000) ──► MySQL
+   tela          services/http.ts           rewrite          Controller → Model      corta_ai
 ```
 
-- As **telas nunca acessam os dados diretamente**: sempre chamam um *service*.
-- Hoje os services salvam no `localStorage` do navegador (simulando a API, inclusive com
-  atraso de rede para mostrar os estados de carregamento). Quando o back-end ficar pronto,
-  **basta trocar a implementação dos services por chamadas `fetch` para a API** — nenhuma tela
-  precisa mudar (RNF-04 — Escalabilidade).
-- Valores em dinheiro são guardados em **centavos (números inteiros)** para evitar erros de
-  arredondamento (ex.: `R$ 12,34` = `1234`).
-- Sempre que um dado muda, o sistema dispara um evento e as consultas abertas são refeitas na
-  hora (RNF-06 — Atualização das informações).
+- As **telas nunca acessam os dados diretamente**: sempre chamam um *service* (`src/services`).
+- O Next.js repassa tudo que começa com `/api` para o PHP (`rewrites` em `next.config.ts`).
+  Para usar outro endereço de API, defina a variável de ambiente `API_URL`.
+- **Login por token:** ao entrar, a API gera um token aleatório; o navegador o envia no
+  cabeçalho `Authorization: Bearer ...` em cada requisição. No banco fica só o hash do token.
+- Toda consulta da API filtra pelo usuário do token (**RNF-02**): um usuário nunca vê nem altera
+  os dados de outro.
+- Valores em dinheiro são guardados em **centavos (números inteiros)** (ex.: `R$ 12,34` = `1234`).
+- Depois de qualquer alteração, o front dispara um evento e as telas abertas recarregam os dados
+  na hora (**RNF-06**).
 
 ---
 
@@ -134,35 +175,35 @@ Tela (features/*)  →  hook (useAsyncData)  →  service (services/*)  →  arm
 
 ### Requisitos funcionais
 
-| Código | Requisito            | Onde está                                              |
-| ------ | -------------------- | ------------------------------------------------------ |
-| RF-01  | Cadastrar cliente    | `/cadastro` — `features/auth/register-form.tsx`        |
-| RF-02  | Login do cliente     | `/login` — `features/auth/login-form.tsx`              |
-| RF-03  | Registro de entrada  | `/entradas` + botão “Nova movimentação”                |
-| RF-04  | Registro de saída    | `/saidas` + botão “Nova movimentação”                  |
-| RF-05  | Definição de metas   | `/metas` — criar, editar, guardar/retirar valor        |
+| Código | Requisito            | Tela                                                   | API                          |
+| ------ | -------------------- | ------------------------------------------------------ | ---------------------------- |
+| RF-01  | Cadastrar cliente    | `/cadastro`                                            | `POST /api/auth/register`    |
+| RF-02  | Login do cliente     | `/login`                                               | `POST /api/auth/login`       |
+| RF-03  | Registro de entrada  | `/entradas` + botão “Nova movimentação”                | `/api/transactions`          |
+| RF-04  | Registro de saída    | `/saidas` + botão “Nova movimentação”                  | `/api/transactions`          |
+| RF-05  | Definição de metas   | `/metas` — criar, editar, guardar/retirar valor        | `/api/goals`                 |
 
 Extras: painel com resumo, histórico com filtros, relatórios com gráficos, categorias
 personalizáveis, exportação CSV, perfil (editar dados, trocar senha, excluir conta) e
-recuperação de senha.
+recuperação de senha (simulada — não envia e-mail).
 
 ### Requisitos não funcionais
 
-| Código | Requisito                  | Como foi atendido                                                                 |
-| ------ | -------------------------- | --------------------------------------------------------------------------------- |
-| RNF-01 | Usabilidade                | Formulários curtos, máscaras, mensagens claras, botão flutuante no celular        |
-| RNF-02 | Segurança                  | Rotas protegidas por login; services filtram tudo pelo `userId` do usuário logado |
-| RNF-03 | Compatibilidade            | Tailwind + recursos padrão da web; testado em Chromium, layout responsivo         |
-| RNF-04 | Escalabilidade             | Arquitetura em camadas (telas → services), componentes reutilizáveis              |
-| RNF-05 | Consistência visual        | Cores da marca centralizadas em `globals.css` e componentes de UI únicos          |
-| RNF-06 | Atualização das informações| Evento `corta-ai:data-changed` recarrega as consultas imediatamente               |
+| Código | Requisito                   | Como foi atendido                                                                        |
+| ------ | --------------------------- | ---------------------------------------------------------------------------------------- |
+| RNF-01 | Usabilidade                 | Formulários curtos, máscaras, mensagens claras, botão flutuante no celular               |
+| RNF-02 | Segurança                   | Login com senha em bcrypt, token por sessão, toda consulta filtrada pelo usuário, SQL com prepared statements, validação também no servidor |
+| RNF-03 | Compatibilidade             | Tailwind + recursos padrão da web; layout responsivo                                     |
+| RNF-04 | Escalabilidade              | Camadas separadas (telas → services → API → models → banco), componentes reutilizáveis   |
+| RNF-05 | Consistência visual         | Cores da marca centralizadas em `globals.css` e componentes de UI únicos                 |
+| RNF-06 | Atualização das informações | Evento `corta-ai:data-changed` recarrega as consultas logo após cada alteração           |
 
 ### Checklist do front-end
 
 - [x] Aplicação Next.js · [x] Organização das pastas · [x] Tailwind CSS · [x] Layout responsivo
 - [x] Navegação entre telas · [x] Componentização · [x] Ícones · [x] Formulários
 - [x] Máscaras de entrada (moeda `R$ 1.234,56`, telefone `(47) 99999-8888`)
-- [x] Validações de campos (zod: obrigatórios, e-mail, telefone, senha forte, confirmação, valores > 0)
+- [x] Validações de campos (zod no front **e** validação no PHP)
 - [x] Mensagens de feedback / Toast (sucesso, erro, aviso)
 - [x] Estados visuais: **carregando** (skeletons/spinners), **vazio** (EmptyState), **erro** (ErrorState com “Tentar novamente”), **sucesso** (toasts e tela de confirmação)
 
@@ -172,4 +213,5 @@ recuperação de senha.
 
 - [`docs/backlog.md`](docs/backlog.md) — backlog do produto (histórias de usuário) e telas
 - [`docs/casos-de-uso.md`](docs/casos-de-uso.md) — casos de uso
-- [`docs/banco-de-dados.md`](docs/banco-de-dados.md) — modelo do banco de dados (DER + SQL)
+- [`docs/banco-de-dados.md`](docs/banco-de-dados.md) — modelo do banco de dados (DER + tabelas)
+- [`docs/api.md`](docs/api.md) — todos os endpoints da API

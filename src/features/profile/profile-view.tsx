@@ -132,7 +132,6 @@ function ProfileForm() {
 }
 
 function ChangePasswordForm() {
-  const user = useCurrentUser();
   const {
     register,
     handleSubmit,
@@ -147,7 +146,7 @@ function ChangePasswordForm() {
 
   async function onSubmit(values: ChangePasswordFormValues) {
     try {
-      await authService.changePassword(user.id, values.currentPassword, values.newPassword);
+      await authService.changePassword(values.currentPassword, values.newPassword);
       reset();
       notify.success("Senha alterada com sucesso!");
     } catch (error) {

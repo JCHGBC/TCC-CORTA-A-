@@ -50,23 +50,6 @@ export const COLOR_OPTIONS = [
   "#78716c",
 ];
 
-export const DEFAULT_CATEGORIES: { name: string; type: TransactionType; color: string }[] = [
-  { name: "Salário", type: "entrada", color: "#10b981" },
-  { name: "Freelance", type: "entrada", color: "#0ea5e9" },
-  { name: "Investimentos", type: "entrada", color: "#6366f1" },
-  { name: "Presentes", type: "entrada", color: "#ec4899" },
-  { name: "Outras entradas", type: "entrada", color: "#64748b" },
-  { name: "Alimentação", type: "saida", color: "#f97316" },
-  { name: "Moradia", type: "saida", color: "#6366f1" },
-  { name: "Transporte", type: "saida", color: "#0ea5e9" },
-  { name: "Contas", type: "saida", color: "#eab308" },
-  { name: "Saúde", type: "saida", color: "#14b8a6" },
-  { name: "Educação", type: "saida", color: "#a855f7" },
-  { name: "Lazer", type: "saida", color: "#ec4899" },
-  { name: "Compras", type: "saida", color: "#f43f5e" },
-  { name: "Outras saídas", type: "saida", color: "#78716c" },
-];
-
 /**
  * Cores dos gráficos — validadas para daltonismo (ΔE ≥ 10 entre si)
  * e contraste mínimo de 3:1 contra o fundo branco.

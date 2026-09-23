@@ -1,0 +1,10 @@
+# Usado apenas se a API rodar no Apache (XAMPP): manda tudo para o index.php
+RewriteEngine On
+
+# Repassa o cabeçalho Authorization (o Apache às vezes o remove)
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

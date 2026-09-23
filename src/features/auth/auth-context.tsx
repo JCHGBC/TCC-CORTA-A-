@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { authService } from "@/services";
+import { notify } from "@/lib/toast";
+import { authService, UNAUTHORIZED_EVENT } from "@/services";
 import type { ProfileInput, RegisterInput, User } from "@/types";
 
 interface AuthContextValue {
@@ -33,6 +34,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Token expirado ou inválido em qualquer requisição → volta para o login
+  useEffect(() => {
+    if (!user) return;
+    const onUnauthorized = () => {
+      notify.info("Sua sessão expirou.", "Entre novamente para continuar.");
+      setUser(null);
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, [user]);
+
   const login = useCallback(async (email: string, password: string, remember: boolean) => {
     const logged = await authService.login(email, password, remember);
     setUser(logged);
@@ -53,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = useCallback(
     async (input: ProfileInput) => {
       if (!user) throw new Error("Sessão expirada.");
-      const updated = await authService.updateProfile(user.id, input);
+      const updated = await authService.updateProfile(input);
       setUser(updated);
       return updated;
     },
@@ -62,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = useCallback(async () => {
     if (!user) return;
-    await authService.deleteAccount(user.id);
+    await authService.deleteAccount();
     setUser(null);
   }, [user]);
 

@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
 import { COLOR_OPTIONS } from "@/config/constants";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { toISODate } from "@/lib/formatters";
 import { centsToMasked, maskCurrency, parseCurrency, withMask } from "@/lib/masks";
 import { notify } from "@/lib/toast";
@@ -30,7 +29,6 @@ function defaultDeadline() {
 }
 
 export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
-  const user = useCurrentUser();
   const isEditing = !!goal;
 
   const {
@@ -61,10 +59,10 @@ export function GoalFormModal({ open, onClose, goal }: GoalFormModalProps) {
     };
     try {
       if (goal) {
-        await goalService.update(user.id, goal.id, input);
+        await goalService.update(goal.id, input);
         notify.success("Meta atualizada!");
       } else {
-        await goalService.create(user.id, input);
+        await goalService.create(input);
         notify.success("Meta criada!", "Agora é só ir guardando aos poucos. 💪");
       }
       onClose();

@@ -14,10 +14,7 @@ export interface User {
   createdAt: string;
 }
 
-/** Usuário como é salvo no "banco" (inclui o hash da senha). */
-export interface StoredUser extends User {
-  passwordHash: string;
-}
+
 
 export interface Category {
   id: string;

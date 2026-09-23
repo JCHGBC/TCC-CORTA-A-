@@ -11,6 +11,7 @@ import { maskPhone, withMask } from "@/lib/masks";
 import { notify } from "@/lib/toast";
 import { firstName } from "@/lib/utils";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations";
+import { ServiceError } from "@/services";
 import { useAuth } from "./auth-context";
 import { PasswordStrength } from "./password-strength";
 
@@ -41,9 +42,14 @@ export function RegisterForm() {
       });
       notify.success(`Conta criada! Bem-vindo, ${firstName(user.name)}!`, "Já criamos algumas categorias para você começar.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Não foi possível criar a conta.";
-      if (message.toLowerCase().includes("e-mail")) setError("email", { message });
-      else notify.error(message);
+      // Erros por campo vindos da API (ex.: e-mail já cadastrado) aparecem embaixo do campo
+      if (error instanceof ServiceError && Object.keys(error.fields).length > 0) {
+        for (const [field, message] of Object.entries(error.fields)) {
+          if (field in values) setError(field as keyof RegisterFormValues, { message });
+        }
+      } else {
+        notify.error(error, "Não foi possível criar a conta.");
+      }
     }
   }
 

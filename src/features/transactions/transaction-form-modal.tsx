@@ -13,7 +13,6 @@ import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PAYMENT_METHODS } from "@/config/constants";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { todayISO } from "@/lib/formatters";
 import { centsToMasked, maskCurrency, parseCurrency, withMask } from "@/lib/masks";
 import { notify } from "@/lib/toast";
@@ -98,7 +97,6 @@ interface TransactionFormProps {
 }
 
 function TransactionForm({ type, transaction, onSavingChange, onSaved }: TransactionFormProps) {
-  const user = useCurrentUser();
   const categories = useCategories(type);
 
   const {
@@ -130,10 +128,10 @@ function TransactionForm({ type, transaction, onSavingChange, onSaved }: Transac
     };
     try {
       if (transaction) {
-        await transactionService.update(user.id, transaction.id, input);
+        await transactionService.update(transaction.id, input);
         notify.success("Movimentação atualizada com sucesso!");
       } else {
-        await transactionService.create(user.id, input);
+        await transactionService.create(input);
         notify.success(type === "entrada" ? "Entrada registrada!" : "Saída registrada!", "Seu saldo já foi atualizado.");
       }
       onSaved();

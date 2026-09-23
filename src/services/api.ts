@@ -1,18 +1,13 @@
-import { delay } from "@/lib/utils";
-
-/** Erro de regra de negócio exibido diretamente para o usuário. */
+/** Erro vindo da API, com mensagem pronta para mostrar ao usuário. */
 export class ServiceError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    /** Código HTTP (0 = sem conexão com o servidor) */
+    public readonly status = 0,
+    /** Erros por campo do formulário, ex.: { email: "E-mail já cadastrado" } */
+    public readonly fields: Record<string, string> = {},
+  ) {
     super(message);
     this.name = "ServiceError";
   }
-}
-
-/**
- * Simula uma chamada à API (latência de rede) para que os estados de
- * "carregando" apareçam na interface exatamente como apareceriam com o back-end real.
- */
-export async function simulateRequest<T>(handler: () => T | Promise<T>, latency = 350): Promise<T> {
-  await delay(latency);
-  return handler();
 }

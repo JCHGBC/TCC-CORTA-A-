@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# back-end (configuração local com senhas)
+/backend/config/config.local.php

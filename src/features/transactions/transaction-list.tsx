@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { PAYMENT_METHOD_LABEL } from "@/config/constants";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { groupByDate } from "@/lib/finance";
 import { formatCurrency, formatDate, formatRelativeDay, formatSignedCurrency } from "@/lib/formatters";
 import { notify } from "@/lib/toast";
@@ -23,7 +22,6 @@ interface TransactionListProps {
 }
 
 export function TransactionList({ transactions, categories, groupByDay, readOnly }: TransactionListProps) {
-  const user = useCurrentUser();
   const { open } = useQuickAdd();
   const [toDelete, setToDelete] = useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,7 +32,7 @@ export function TransactionList({ transactions, categories, groupByDay, readOnly
     if (!toDelete) return;
     setIsDeleting(true);
     try {
-      await transactionService.remove(user.id, toDelete.id);
+      await transactionService.remove(toDelete.id);
       notify.success("Movimentação excluída.");
       setToDelete(null);
     } catch (error) {

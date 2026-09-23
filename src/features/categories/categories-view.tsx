@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { SegmentedControl } from "@/components/ui/misc";
 import { Modal } from "@/components/ui/modal";
 import { COLOR_OPTIONS } from "@/config/constants";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { useCategories } from "@/features/transactions/hooks";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { notify } from "@/lib/toast";
@@ -24,10 +23,9 @@ import type { Category, TransactionType } from "@/types";
 
 /** Tela de categorias (origem das entradas e saídas). */
 export function CategoriesView() {
-  const user = useCurrentUser();
   const [type, setType] = useState<TransactionType>("saida");
   const categories = useCategories(type);
-  const usageFetcher = useCallback(() => categoryService.usage(user.id), [user.id]);
+  const usageFetcher = useCallback(() => categoryService.usage(), []);
   const usage = useAsyncData(usageFetcher);
 
   const [form, setForm] = useState<{ open: boolean; category?: Category; key: number }>({ open: false, key: 0 });
@@ -41,7 +39,7 @@ export function CategoriesView() {
     if (!toDelete) return;
     setIsDeleting(true);
     try {
-      await categoryService.remove(user.id, toDelete.id);
+      await categoryService.remove(toDelete.id);
       notify.success("Categoria excluída.");
       setToDelete(null);
     } catch (error) {
@@ -160,7 +158,6 @@ interface CategoryFormModalProps {
 }
 
 function CategoryFormModal({ onClose, category, defaultType }: CategoryFormModalProps) {
-  const user = useCurrentUser();
   const {
     register,
     control,
@@ -178,10 +175,10 @@ function CategoryFormModal({ onClose, category, defaultType }: CategoryFormModal
   async function onSubmit(values: CategoryFormValues) {
     try {
       if (category) {
-        await categoryService.update(user.id, category.id, values);
+        await categoryService.update(category.id, values);
         notify.success("Categoria atualizada!");
       } else {
-        await categoryService.create(user.id, values);
+        await categoryService.create(values);
         notify.success("Categoria criada!");
       }
       onClose();

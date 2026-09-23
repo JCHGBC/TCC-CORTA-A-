@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/feedback";
 import { SegmentedControl } from "@/components/ui/misc";
-import { useCurrentUser } from "@/features/auth/auth-context";
 import { isGoalCompleted } from "@/lib/finance";
 import { formatCurrency } from "@/lib/formatters";
 import { notify } from "@/lib/toast";
@@ -24,7 +23,6 @@ type Filter = "andamento" | "concluidas" | "todas";
 
 /** Tela de Metas (RF-05). */
 export function GoalsView() {
-  const user = useCurrentUser();
   const goals = useGoals();
   const [filter, setFilter] = useState<Filter>("andamento");
   const [form, setForm] = useState<{ open: boolean; goal?: Goal; key: number }>({ open: false, key: 0 });
@@ -53,7 +51,7 @@ export function GoalsView() {
     if (!toDelete) return;
     setIsDeleting(true);
     try {
-      await goalService.remove(user.id, toDelete.id);
+      await goalService.remove(toDelete.id);
       notify.success("Meta excluída.");
       setToDelete(null);
     } catch (error) {
