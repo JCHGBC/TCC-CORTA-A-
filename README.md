@@ -211,7 +211,7 @@ recuperação de senha (simulada — não envia e-mail).
 
 ## 📚 Documentação complementar
 
-- [`docs/backlog.md`](docs/backlog.md) — backlog do produto (histórias de usuário) e telas
+- [`docs/analise-de-negocio-e-planejamento.md`](docs/analise-de-negocio-e-planejamento.md) — análise de negócio, backlog do produto, matriz MoSCoW, sprints e story points
 - [`docs/casos-de-uso.md`](docs/casos-de-uso.md) — casos de uso
 - [`docs/banco-de-dados.md`](docs/banco-de-dados.md) — modelo do banco de dados (DER + tabelas)
 - [`docs/api.md`](docs/api.md) — todos os endpoints da API
