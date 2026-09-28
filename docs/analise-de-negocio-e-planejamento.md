@@ -19,7 +19,7 @@ do produto foi organizado em histórias de usuário (HU) e tarefas técnicas (T)
 | ID   | Item do backlog                                                                                     | Prioridade | SP | Sprint |
 | ---- | --------------------------------------------------------------------------------------------------- | ---------- | -- | ------ |
 | T1   | Protótipo das telas no Figma e modelagem UML                                                        | Must       | 5  | 1      |
-| T2   | Banco de dados MySQL e API em PHP                                                                   | Must       | 8  | 1      |
+| T2   | Banco de dados no Firestore e autenticação com Firebase                                             | Must       | 8  | 1      |
 | T3   | Estrutura do front-end: Next.js, Tailwind, layout responsivo e componentes                          | Must       | 8  | 2      |
 | HU01 | Como visitante, quero criar uma conta, para acessar o sistema (RF-01)                               | Must       | 5  | 2      |
 | HU02 | Como usuário, quero entrar e sair com e-mail e senha, para acessar só os meus dados (RF-02, RNF-02) | Must       | 5  | 3      |
