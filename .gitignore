@@ -40,5 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# back-end (configuração local com senhas)
-/backend/config/config.local.php
+# firebase (emulador)
+.firebase/
+*-debug.log

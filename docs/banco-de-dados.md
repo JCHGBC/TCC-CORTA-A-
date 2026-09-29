@@ -1,146 +1,125 @@
 # Banco de dados — Corta Aí
 
-Banco **MySQL** (ou MariaDB, que vem no XAMPP) chamado `corta_ai`.
-O script completo de criação está em [`backend/database/schema.sql`](../backend/database/schema.sql)
-e o comando `php backend/database/setup.php` cria o banco, as tabelas e a conta de demonstração.
+Banco **Cloud Firestore** (NoSQL, do Firebase), projeto `corta-ai-bd1c1`.
+Login e senha ficam no **Firebase Authentication**: a senha nunca é gravada no Firestore.
+As regras de acesso estão em [`firestore.rules`](../firestore.rules).
 
-## Diagrama entidade-relacionamento
+## Estrutura (coleções e documentos)
+
+Cada usuário tem um documento em `usuarios`, e os dados dele ficam em **subcoleções** desse
+documento. Assim, tudo o que pertence a um usuário fica "dentro" dele.
+
+```
+usuarios/{uid}                          ← uid = id do usuário no Firebase Authentication
+ ├── categorias/{id}
+ ├── movimentacoes/{id}
+ └── metas/{id}
+```
 
 ```mermaid
 erDiagram
-  USUARIO ||--o{ SESSAO : "faz login"
   USUARIO ||--o{ CATEGORIA : possui
   USUARIO ||--o{ MOVIMENTACAO : registra
   USUARIO ||--o{ META : define
   CATEGORIA ||--o{ MOVIMENTACAO : classifica
 
   USUARIO {
-    int id PK
-    varchar nome
-    varchar email UK
-    varchar telefone
-    varchar senha_hash
-    datetime criado_em
-  }
-  SESSAO {
-    int id PK
-    int usuario_id FK
-    char token_hash UK
-    datetime expira_em
-    datetime criado_em
+    string uid PK "id do Firebase Authentication"
+    string nome
+    string email
+    string telefone
+    timestamp criadoEm
   }
   CATEGORIA {
-    int id PK
-    int usuario_id FK
-    varchar nome
-    enum tipo "entrada | saida"
-    char cor
-    datetime criado_em
+    string id PK
+    string nome
+    string tipo "entrada | saida"
+    string cor
+    timestamp criadoEm
   }
   MOVIMENTACAO {
-    int id PK
-    int usuario_id FK
-    int categoria_id FK
-    enum tipo "entrada | saida"
-    varchar descricao
-    int valor_centavos
-    date data
-    enum forma_pagamento
-    varchar observacao
-    datetime criado_em
+    string id PK
+    string tipo "entrada | saida"
+    string descricao
+    int valorCentavos
+    string categoriaId FK
+    string data "AAAA-MM-DD"
+    string formaPagamento
+    string observacao
+    timestamp criadoEm
   }
   META {
-    int id PK
-    int usuario_id FK
-    varchar nome
-    varchar descricao
-    int valor_alvo_centavos
-    int valor_atual_centavos
-    date prazo
-    char cor
-    datetime criado_em
+    string id PK
+    string nome
+    string descricao
+    int valorAlvoCentavos
+    int valorAtualCentavos
+    string prazo "AAAA-MM-DD"
+    string cor
+    timestamp criadoEm
   }
 ```
 
-## Dicionário de dados
+## Campos
 
-### `usuario`
-| Coluna      | Tipo          | Descrição                                      |
-| ----------- | ------------- | ---------------------------------------------- |
-| id          | INT (PK)      | Identificador, gerado automaticamente          |
-| nome        | VARCHAR(80)   | Nome completo                                  |
-| email       | VARCHAR(120)  | E-mail de login (único)                        |
-| telefone    | VARCHAR(15)   | Telefone com DDD, ex.: (47) 99999-8888         |
-| senha_hash  | VARCHAR(255)  | Senha criptografada com bcrypt (`password_hash`) |
-| criado_em   | DATETIME      | Data do cadastro                               |
+**`usuarios/{uid}`**
 
-### `sessao`
-| Coluna      | Tipo          | Descrição                                            |
-| ----------- | ------------- | ---------------------------------------------------- |
-| id          | INT (PK)      |                                                      |
-| usuario_id  | INT (FK)      | Dono da sessão                                       |
-| token_hash  | CHAR(64)      | SHA-256 do token de login (o token puro fica só no navegador) |
-| expira_em   | DATETIME      | 30 dias com “manter conectado”, 12 horas sem         |
+| Campo      | Tipo      | Descrição                          |
+| ---------- | --------- | ---------------------------------- |
+| `nome`     | string    | Nome completo                      |
+| `email`    | string    | E-mail (o mesmo do login)          |
+| `telefone` | string    | Telefone com máscara               |
+| `criadoEm` | timestamp | Data do cadastro                   |
 
-### `categoria`
-| Coluna      | Tipo                      | Descrição                                   |
-| ----------- | ------------------------- | ------------------------------------------- |
-| id          | INT (PK)                  |                                             |
-| usuario_id  | INT (FK)                  | Cada usuário tem as suas categorias         |
-| nome        | VARCHAR(30)               | Único por usuário + tipo                    |
-| tipo        | ENUM('entrada','saida')   | Origem (entrada) ou destino (saída)         |
-| cor         | CHAR(7)                   | Cor em hexadecimal, ex.: `#10b981`          |
+**`usuarios/{uid}/categorias/{id}`**: origem das entradas e destino das saídas.
 
-### `movimentacao`
-| Coluna           | Tipo                    | Descrição                                            |
-| ---------------- | ----------------------- | ---------------------------------------------------- |
-| id               | INT (PK)                |                                                      |
-| usuario_id       | INT (FK)                |                                                      |
-| categoria_id     | INT (FK)                | Não permite excluir uma categoria em uso (RESTRICT)  |
-| tipo             | ENUM('entrada','saida') | RF-03 / RF-04                                        |
-| descricao        | VARCHAR(60)             |                                                      |
-| valor_centavos   | INT UNSIGNED            | Valor em centavos, sempre > 0 (R$ 12,34 = 1234)      |
-| data             | DATE                    | Data da movimentação                                 |
-| forma_pagamento  | ENUM                    | dinheiro, pix, debito, credito, boleto, transferencia |
-| observacao       | VARCHAR(200) NULL       | Opcional                                             |
+| Campo      | Tipo      | Descrição                          |
+| ---------- | --------- | ---------------------------------- |
+| `nome`     | string    | Ex.: Salário, Alimentação          |
+| `tipo`     | string    | `entrada` ou `saida`               |
+| `cor`      | string    | Cor em hexadecimal (`#10b981`)     |
+| `criadoEm` | timestamp | Data de criação                    |
 
-### `meta`
-| Coluna                | Tipo           | Descrição                        |
-| --------------------- | -------------- | -------------------------------- |
-| id                    | INT (PK)       |                                  |
-| usuario_id            | INT (FK)       |                                  |
-| nome                  | VARCHAR(40)    |                                  |
-| descricao             | VARCHAR(120)   | Opcional                         |
-| valor_alvo_centavos   | INT UNSIGNED   | Quanto quer juntar (> 0)         |
-| valor_atual_centavos  | INT UNSIGNED   | Quanto já guardou                |
-| prazo                 | DATE           |                                  |
-| cor                   | CHAR(7)        |                                  |
+**`usuarios/{uid}/movimentacoes/{id}`**: entradas (RF-03) e saídas (RF-04).
 
-## Regras importantes
+| Campo            | Tipo      | Descrição                                                   |
+| ---------------- | --------- | ----------------------------------------------------------- |
+| `tipo`           | string    | `entrada` ou `saida`                                        |
+| `descricao`      | string    | Ex.: Mercado do mês                                         |
+| `valorCentavos`  | int       | Valor em centavos (`R$ 12,34` = `1234`)                     |
+| `categoriaId`    | string    | id do documento em `categorias`                             |
+| `data`           | string    | Data da movimentação (`AAAA-MM-DD`)                         |
+| `formaPagamento` | string    | `pix`, `dinheiro`, `debito`, `credito`, `boleto`, `transferencia` |
+| `observacao`     | string    | Opcional                                                    |
+| `criadoEm`       | timestamp | Data do registro                                            |
 
-- **Valores em centavos (INT)**: evita os erros de arredondamento de `FLOAT`/`DOUBLE`.
-- **RNF-02 (Segurança)**: todas as consultas da API filtram por `usuario_id` do usuário do token.
-- **Senhas** nunca são salvas em texto: `password_hash()` (bcrypt) no cadastro e `password_verify()` no login.
-- **SQL Injection**: todas as consultas usam *prepared statements* do PDO (`?` nos parâmetros).
-- Ao **excluir a conta**, a API apaga movimentações, metas, categorias e sessões do usuário.
-- `utf8mb4_unicode_ci`: a busca e a verificação de nomes repetidos ignoram maiúsculas e acentos.
+**`usuarios/{uid}/metas/{id}`**: metas financeiras (RF-05).
 
-## Consultas de exemplo
+| Campo                | Tipo      | Descrição                      |
+| -------------------- | --------- | ------------------------------ |
+| `nome`               | string    | Ex.: Reserva de emergência     |
+| `descricao`          | string    | Opcional                       |
+| `valorAlvoCentavos`  | int       | Valor que se quer juntar       |
+| `valorAtualCentavos` | int       | Valor já guardado              |
+| `prazo`              | string    | Data limite (`AAAA-MM-DD`)     |
+| `cor`                | string    | Cor em hexadecimal             |
+| `criadoEm`           | timestamp | Data de criação                |
 
-```sql
--- Saldo atual do usuário 1
-SELECT SUM(CASE WHEN tipo = 'entrada' THEN valor_centavos ELSE -valor_centavos END) / 100 AS saldo_reais
-FROM movimentacao WHERE usuario_id = 1;
+## Regras de negócio
 
--- Saídas por categoria em setembro/2026
-SELECT c.nome, SUM(m.valor_centavos) / 100 AS total_reais
-FROM movimentacao m
-JOIN categoria c ON c.id = m.categoria_id
-WHERE m.usuario_id = 1 AND m.tipo = 'saida' AND m.data BETWEEN '2026-09-01' AND '2026-09-30'
-GROUP BY c.nome
-ORDER BY total_reais DESC;
+- Valores em dinheiro são guardados em **centavos (inteiros)**, para não ter erro de arredondamento.
+- Ao se cadastrar, o usuário já recebe as **categorias padrão** (5 de entrada e 9 de saída).
+- Uma categoria **não pode ser excluída** nem mudar de tipo se já tiver movimentações.
+- A categoria de uma movimentação precisa ser do mesmo tipo dela (entrada ou saída).
+- Guardar e retirar dinheiro de uma meta usa uma **transação** do Firestore; não é possível
+  retirar mais do que já foi guardado.
+- Ao excluir a conta, todos os documentos do usuário são apagados.
 
--- Progresso das metas
-SELECT nome, ROUND(valor_atual_centavos / valor_alvo_centavos * 100) AS progresso_pct
-FROM meta WHERE usuario_id = 1;
-```
+## Segurança (RNF-02)
+
+As regras em [`firestore.rules`](../firestore.rules) garantem que:
+
+- só um usuário **logado** acessa o banco;
+- cada usuário só lê e grava `usuarios/{seu uid}` e as subcoleções dele;
+- os campos principais têm o tipo certo (ex.: `valorCentavos` inteiro e maior que zero,
+  `tipo` só `entrada` ou `saida`).

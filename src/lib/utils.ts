@@ -24,3 +24,12 @@ export function getInitials(name: string) {
 export function firstName(name: string) {
   return name.trim().split(/\s+/)[0] ?? "";
 }
+
+/** Remove acentos e deixa em minúsculas (usado nas buscas e comparações). */
+export function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
+}

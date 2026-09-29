@@ -1,0 +1,57 @@
+rules_version = '2';
+
+// Regras de segurança do Corta Aí (RNF-02).
+// Cada usuário só lê e grava o próprio documento em usuarios/{uid} e as subcoleções dele.
+// Publicar: Firebase Console → Firestore Database → Regras → colar este arquivo → Publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function texto(valor, max) {
+      return valor is string && valor.size() > 0 && valor.size() <= max;
+    }
+
+    function tipoValido(tipo) {
+      return tipo in ['entrada', 'saida'];
+    }
+
+    match /usuarios/{uid} {
+      allow read, delete: if logado(uid);
+      allow create, update: if logado(uid)
+        && texto(request.resource.data.nome, 100)
+        && request.resource.data.telefone is string;
+
+      match /categorias/{id} {
+        allow read, delete: if logado(uid);
+        allow create, update: if logado(uid)
+          && texto(request.resource.data.nome, 40)
+          && tipoValido(request.resource.data.tipo)
+          && request.resource.data.cor is string;
+      }
+
+      match /movimentacoes/{id} {
+        allow read, delete: if logado(uid);
+        allow create, update: if logado(uid)
+          && tipoValido(request.resource.data.tipo)
+          && texto(request.resource.data.descricao, 100)
+          && request.resource.data.valorCentavos is int
+          && request.resource.data.valorCentavos > 0
+          && request.resource.data.categoriaId is string
+          && request.resource.data.data is string;
+      }
+
+      match /metas/{id} {
+        allow read, delete: if logado(uid);
+        allow create, update: if logado(uid)
+          && texto(request.resource.data.nome, 60)
+          && request.resource.data.valorAlvoCentavos is int
+          && request.resource.data.valorAlvoCentavos > 0
+          && request.resource.data.valorAtualCentavos is int
+          && request.resource.data.valorAtualCentavos >= 0;
+      }
+    }
+  }
+}

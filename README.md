@@ -8,41 +8,19 @@ o saldo, consulta relatórios e acompanha metas financeiras, **sem integração 
 >
 > **Equipe:** Julio Cesar Heinzen · Gabriel Balin Cabral · Enzo Guilherme Janz Frainer · Vinicius dos Reis
 
-| Parte       | Tecnologia                                              | Pasta       |
-| ----------- | ------------------------------------------------------- | ----------- |
-| Front-end   | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4     | `src/`      |
-| Back-end    | PHP 8.1+ (API REST, sem framework)                      | `backend/`  |
-| Banco       | MySQL 8 / MariaDB 10.4+ (o do XAMPP funciona)           | `backend/database/` |
+| Parte              | Tecnologia                                          | Pasta / arquivo    |
+| ------------------ | --------------------------------------------------- | ------------------ |
+| Front-end          | Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 | `src/`             |
+| Back-end / login   | Firebase Authentication (e-mail e senha)            | `src/services/`    |
+| Banco de dados     | Cloud Firestore (NoSQL)                             | `firestore.rules`  |
+| Hospedagem         | Vercel                                              |                    |
 
 ---
 
-## 🚀 Como rodar (Windows + XAMPP)
+## 🚀 Como rodar
 
-Pré-requisitos: **Node.js 20+** com **npm 10+**, e o **XAMPP** (traz PHP e MySQL).
-
-### 1. Ligar o MySQL
-Abra o **XAMPP Control Panel** e clique em **Start** no **MySQL**. (O Apache não é necessário.)
-
-### 2. Criar o banco de dados (só na primeira vez)
-Na pasta do projeto, no PowerShell:
-
-```powershell
-C:\xampp\php\php.exe backend\database\setup.php
-```
-
-Isso cria o banco `corta_ai`, as tabelas e a **conta de demonstração** com 6 meses de dados.
-Alternativa: no **phpMyAdmin** (http://localhost/phpmyadmin) → aba **Importar** → arquivo
-`backend/database/schema.sql` (cria só as tabelas, sem a conta demo).
-
-### 3. Ligar a API (PHP) — deixe este terminal aberto
-
-```powershell
-C:\xampp\php\php.exe -S 127.0.0.1:8000 -t backend/public backend/public/index.php
-```
-
-Teste no navegador: http://127.0.0.1:8000/api/health → deve aparecer `{"status":"ok"}`.
-
-### 4. Ligar o site — em outro terminal
+Pré-requisitos: **Node.js 20+** com **npm 10+**. Não precisa instalar banco de dados: ele fica
+no Firebase (na nuvem).
 
 ```powershell
 npm install      # só na primeira vez
@@ -51,10 +29,7 @@ npm run dev
 
 Abra **http://localhost:3000**.
 
-> 💡 Se você colocar `C:\xampp\php` no **PATH** do Windows, pode usar os atalhos
-> `npm run db:setup` (passo 2) e `npm run api` (passo 3).
-
-**Conta de demonstração:**
+**Conta de demonstração** (é criada sozinha, com 6 meses de dados, no primeiro login):
 
 | E-mail             | Senha      |
 | ------------------ | ---------- |
@@ -62,24 +37,27 @@ Abra **http://localhost:3000**.
 
 Na tela de login há o botão **“Usar conta de demonstração”**, que preenche os campos.
 
-### Configuração do banco
-Por padrão a API usa o MySQL do XAMPP: `127.0.0.1:3306`, usuário `root`, **sem senha**, banco
-`corta_ai`. Se o seu MySQL tiver senha, crie o arquivo `backend/config/config.local.php`
-(ele não vai para o GitHub):
+### Configuração do Firebase (só uma vez)
 
-```php
-<?php return ['db' => ['user' => 'root', 'pass' => 'sua-senha']];
-```
+O projeto já está ligado ao Firebase `corta-ai-bd1c1` (configuração em `src/lib/firebase.ts`).
+No [Console do Firebase](https://console.firebase.google.com):
 
-Para **apagar tudo e recriar** o banco com os dados de exemplo: `php backend/database/setup.php --reset`.
+1. **Authentication → Método de login →** ativar **E-mail/senha**.
+2. **Firestore Database →** criar o banco.
+3. **Firestore Database → Regras →** colar o conteúdo do arquivo [`firestore.rules`](firestore.rules)
+   e clicar em **Publicar**. Sem isso o Firestore bloqueia tudo e o site não consegue salvar.
+
+Para usar **outro projeto** do Firebase, crie um arquivo `.env.local` com as variáveis
+`NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`,
+`NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` e
+`NEXT_PUBLIC_FIREBASE_APP_ID` (as mesmas também podem ser cadastradas na Vercel).
 
 ### Problemas comuns
 
-**“Não foi possível conectar ao servidor. Verifique se a API (PHP) e o MySQL estão ligados.”**
-O terminal da API (passo 3) está fechado, ou o MySQL não está ligado no XAMPP.
+**“Você não tem permissão para acessar estes dados.”** As regras do Firestore não foram
+publicadas (passo 3 da configuração do Firebase).
 
-**“Não foi possível conectar ao banco de dados…”** O MySQL está desligado, o banco não foi
-criado (passo 2) ou a senha está errada (veja *Configuração do banco*).
+**“O login por e-mail e senha não está ativado no Firebase.”** Falta o passo 1.
 
 **`Cannot find native binding` / `Cannot find module '@tailwindcss/oxide-win32-x64-msvc'`**
 Quase sempre é um **npm antigo** (ex.: npm 9 junto com Node 24), que tem um bug e não baixa os
@@ -109,30 +87,16 @@ Para corrigir de vez no computador: `npm install -g npm@latest` (pode pedir admi
 | Mensagens de feedback (toast) | [sonner](https://sonner.emilkowal.ski)                              |
 | Gráficos                      | [Recharts](https://recharts.org)                                    |
 | Máscaras de entrada           | Implementação própria em `src/lib/masks.ts` (moeda, telefone)       |
-| API                           | PHP 8.1+ puro, PDO (prepared statements), `password_hash` (bcrypt)  |
-| Banco de dados                | MySQL / MariaDB                                                     |
+| Login / autenticação          | [Firebase Authentication](https://firebase.google.com/docs/auth)    |
+| Banco de dados                | [Cloud Firestore](https://firebase.google.com/docs/firestore) (NoSQL) |
+| Hospedagem                    | [Vercel](https://vercel.com)                                        |
 
 ---
 
 ## 🗂️ Organização das pastas (arquitetura)
 
 ```
-├── backend/                      # API REST em PHP
-│   ├── config/config.php         #   configurações (banco, sessão, CORS)
-│   ├── database/
-│   │   ├── schema.sql            #   script de criação das tabelas
-│   │   └── setup.php             #   cria o banco + conta de demonstração
-│   ├── public/
-│   │   ├── index.php             #   ponto de entrada (toda requisição passa aqui)
-│   │   └── .htaccess             #   para rodar no Apache, se preferir
-│   └── src/
-│       ├── Core/                 #   Router, Request, Response, Database (PDO), Validator
-│       ├── Models/               #   consultas SQL: User, Session, Category, Transaction, Goal
-│       ├── Controllers/          #   regras de cada endpoint (valida → chama o model → responde)
-│       ├── routes.php            #   lista de todas as rotas da API
-│       └── bootstrap.php         #   autoload das classes e configurações
-│
-├── src/                          # FRONT-END (Next.js)
+├── src/                          # código do site (Next.js)
 │   ├── app/                      #   ROTAS (App Router) — só a "casca" das páginas
 │   │   ├── (auth)/               #     /login, /cadastro, /recuperar-senha
 │   │   ├── (app)/                #     área logada: /dashboard, /entradas, /saidas, /historico,
@@ -142,29 +106,28 @@ Para corrigir de vez no computador: `npm install -g npm@latest` (pode pedir admi
 │   ├── components/               #   componentes reutilizáveis (ui/, layout/, shared/)
 │   ├── features/                 #   telas por funcionalidade (auth, dashboard, transactions,
 │   │                             #   goals, categories, reports, profile, landing)
-│   ├── services/                 #   ÚNICA parte que conversa com a API (http.ts + *.service.ts)
+│   ├── services/                 #   ÚNICA parte que conversa com o Firebase (*.service.ts)
 │   ├── hooks/                    #   useAsyncData (carregando/erro/sucesso), useDebouncedValue
-│   ├── lib/                      #   máscaras, formatadores, validações, cálculos financeiros
+│   ├── lib/                      #   firebase.ts, máscaras, formatadores, validações, cálculos
 │   ├── config/                   #   constantes e itens do menu
 │   └── types/                    #   tipos TypeScript do domínio
 │
-└── docs/                         # backlog, casos de uso, banco de dados, API
+├── docs/                         # backlog, casos de uso, banco de dados
+├── firestore.rules               # regras de segurança do banco
+└── firebase.json                 # configuração do Firebase (regras e emulador)
 ```
 
 ### Como as partes conversam
 
 ```
-Navegador ──► Next.js (localhost:3000) ──/api/*──► PHP (127.0.0.1:8000) ──► MySQL
-   tela          services/http.ts           rewrite          Controller → Model      corta_ai
+Navegador (Next.js) ──► services/*.service.ts ──► Firebase Authentication (login)
+                                              └─► Cloud Firestore (dados)
 ```
 
 - As **telas nunca acessam os dados diretamente**: sempre chamam um *service* (`src/services`).
-- O Next.js repassa tudo que começa com `/api` para o PHP (`rewrites` em `next.config.ts`).
-  Para usar outro endereço de API, defina a variável de ambiente `API_URL`.
-- **Login por token:** ao entrar, a API gera um token aleatório; o navegador o envia no
-  cabeçalho `Authorization: Bearer ...` em cada requisição. No banco fica só o hash do token.
-- Toda consulta da API filtra pelo usuário do token (**RNF-02**): um usuário nunca vê nem altera
-  os dados de outro.
+- **Login:** feito pelo Firebase Authentication, que guarda as senhas com segurança.
+- **Segurança (RNF-02):** as regras do Firestore (`firestore.rules`) só deixam cada usuário ler e
+  gravar os próprios dados. Estrutura do banco em [`docs/banco-de-dados.md`](docs/banco-de-dados.md).
 - Valores em dinheiro são guardados em **centavos (números inteiros)** (ex.: `R$ 12,34` = `1234`).
 - Depois de qualquer alteração, o front dispara um evento e as telas abertas recarregam os dados
   na hora (**RNF-06**).
@@ -175,26 +138,26 @@ Navegador ──► Next.js (localhost:3000) ──/api/*──► PHP (127.0.0.
 
 ### Requisitos funcionais
 
-| Código | Requisito            | Tela                                                   | API                          |
-| ------ | -------------------- | ------------------------------------------------------ | ---------------------------- |
-| RF-01  | Cadastrar cliente    | `/cadastro`                                            | `POST /api/auth/register`    |
-| RF-02  | Login do cliente     | `/login`                                               | `POST /api/auth/login`       |
-| RF-03  | Registro de entrada  | `/entradas` + botão “Nova movimentação”                | `/api/transactions`          |
-| RF-04  | Registro de saída    | `/saidas` + botão “Nova movimentação”                  | `/api/transactions`          |
-| RF-05  | Definição de metas   | `/metas` — criar, editar, guardar/retirar valor        | `/api/goals`                 |
+| Código | Requisito            | Tela                                                   | Firebase                         |
+| ------ | -------------------- | ------------------------------------------------------ | -------------------------------- |
+| RF-01  | Cadastrar cliente    | `/cadastro`                                            | Authentication + `usuarios`      |
+| RF-02  | Login do cliente     | `/login`                                               | Authentication                   |
+| RF-03  | Registro de entrada  | `/entradas` + botão “Nova movimentação”                | `movimentacoes`                  |
+| RF-04  | Registro de saída    | `/saidas` + botão “Nova movimentação”                  | `movimentacoes`                  |
+| RF-05  | Definição de metas   | `/metas` — criar, editar, guardar/retirar valor        | `metas`                          |
 
 Extras: painel com resumo, histórico com filtros, relatórios com gráficos, categorias
 personalizáveis, exportação CSV, perfil (editar dados, trocar senha, excluir conta) e
-recuperação de senha (simulada — não envia e-mail).
+recuperação de senha (envia e-mail pelo Firebase).
 
 ### Requisitos não funcionais
 
 | Código | Requisito                   | Como foi atendido                                                                        |
 | ------ | --------------------------- | ---------------------------------------------------------------------------------------- |
 | RNF-01 | Usabilidade                 | Formulários curtos, máscaras, mensagens claras, botão flutuante no celular               |
-| RNF-02 | Segurança                   | Login com senha em bcrypt, token por sessão, toda consulta filtrada pelo usuário, SQL com prepared statements, validação também no servidor |
+| RNF-02 | Segurança                   | Login pelo Firebase Authentication, regras do Firestore que só liberam os dados do próprio usuário, validação dos campos nas regras |
 | RNF-03 | Compatibilidade             | Tailwind + recursos padrão da web; layout responsivo                                     |
-| RNF-04 | Escalabilidade              | Camadas separadas (telas → services → API → models → banco), componentes reutilizáveis   |
+| RNF-04 | Escalabilidade              | Camadas separadas (telas → services → Firebase), componentes reutilizáveis; Firebase e Vercel escalam sozinhos |
 | RNF-05 | Consistência visual         | Cores da marca centralizadas em `globals.css` e componentes de UI únicos                 |
 | RNF-06 | Atualização das informações | Evento `corta-ai:data-changed` recarrega as consultas logo após cada alteração           |
 
@@ -203,7 +166,7 @@ recuperação de senha (simulada — não envia e-mail).
 - [x] Aplicação Next.js · [x] Organização das pastas · [x] Tailwind CSS · [x] Layout responsivo
 - [x] Navegação entre telas · [x] Componentização · [x] Ícones · [x] Formulários
 - [x] Máscaras de entrada (moeda `R$ 1.234,56`, telefone `(47) 99999-8888`)
-- [x] Validações de campos (zod no front **e** validação no PHP)
+- [x] Validações de campos (zod no front **e** regras do Firestore)
 - [x] Mensagens de feedback / Toast (sucesso, erro, aviso)
 - [x] Estados visuais: **carregando** (skeletons/spinners), **vazio** (EmptyState), **erro** (ErrorState com “Tentar novamente”), **sucesso** (toasts e tela de confirmação)
 
@@ -213,5 +176,4 @@ recuperação de senha (simulada — não envia e-mail).
 
 - [`docs/analise-de-negocio-e-planejamento.md`](docs/analise-de-negocio-e-planejamento.md) — análise de negócio, backlog do produto, matriz MoSCoW, sprints e story points
 - [`docs/casos-de-uso.md`](docs/casos-de-uso.md) — casos de uso
-- [`docs/banco-de-dados.md`](docs/banco-de-dados.md) — modelo do banco de dados (DER + tabelas)
-- [`docs/api.md`](docs/api.md) — todos os endpoints da API
+- [`docs/banco-de-dados.md`](docs/banco-de-dados.md) — estrutura do banco no Firestore

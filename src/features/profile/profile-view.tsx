@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { KeyRound, Mail, Phone, ShieldCheck, Trash2, UserRound } from "lucide-react";
+import { KeyRound, Mail, Phone, ShieldCheck, Trash2, TriangleAlert, UserRound } from "lucide-react";
 import { Avatar } from "@/components/layout/user-menu";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input, PasswordInput } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-context";
 import { PasswordStrength } from "@/features/auth/password-strength";
 import { formatDateLong } from "@/lib/formatters";
@@ -22,7 +22,7 @@ import {
   type ChangePasswordFormValues,
   type ProfileFormValues,
 } from "@/lib/validations";
-import { authService } from "@/services";
+import { authService, ServiceError } from "@/services";
 
 export function ProfileView() {
   const user = useCurrentUser();
@@ -101,7 +101,10 @@ function ProfileForm() {
             label="E-mail"
             required
             autoComplete="email"
+            readOnly
+            hint="O e-mail é usado no login e não pode ser alterado."
             leftIcon={<Mail />}
+            className="bg-slate-50 text-slate-500"
             error={errors.email?.message}
             {...register("email")}
           />
@@ -202,16 +205,27 @@ function DangerZone() {
   const { deleteAccount } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string>();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  async function handleDelete() {
+  function close() {
+    setOpen(false);
+    setPassword("");
+    setError(undefined);
+  }
+
+  async function handleDelete(event: FormEvent) {
+    event.preventDefault();
+    if (!password) return setError("Digite sua senha para confirmar.");
     setIsDeleting(true);
     try {
-      await deleteAccount();
+      await deleteAccount(password);
       notify.success("Conta excluída.", "Todos os seus dados foram apagados.");
       router.replace("/");
-    } catch (error) {
-      notify.error(error);
+    } catch (err) {
+      if (err instanceof ServiceError && err.fields.currentPassword) setError(err.fields.currentPassword);
+      else notify.error(err);
       setIsDeleting(false);
     }
   }
@@ -224,15 +238,46 @@ function DangerZone() {
           Excluir minha conta
         </Button>
       </CardContent>
-      <ConfirmDialog
+      <Modal
         open={open}
-        onClose={() => setOpen(false)}
-        onConfirm={handleDelete}
-        isLoading={isDeleting}
+        onClose={close}
         title="Excluir sua conta?"
-        description="Esta ação não pode ser desfeita. Todas as suas entradas, saídas, categorias e metas serão apagadas."
-        confirmLabel="Sim, excluir conta"
-      />
+        size="sm"
+        preventClose={isDeleting}
+        footer={
+          <>
+            <Button variant="outline" onClick={close} disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="delete-account-form" variant="danger" isLoading={isDeleting} loadingText="Excluindo...">
+              Sim, excluir conta
+            </Button>
+          </>
+        }
+      >
+        <form id="delete-account-form" onSubmit={handleDelete} noValidate className="space-y-4">
+          <div className="flex gap-4">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+              <TriangleAlert className="size-5" />
+            </span>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Esta ação não pode ser desfeita. Todas as suas entradas, saídas, categorias e metas serão apagadas.
+            </p>
+          </div>
+          <PasswordInput
+            id="delete-password"
+            label="Digite sua senha para confirmar"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(undefined);
+            }}
+            error={error}
+          />
+        </form>
+      </Modal>
     </Card>
   );
 }
