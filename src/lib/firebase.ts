@@ -32,6 +32,7 @@ function firebaseApp() {
 export function firebaseAuth() {
   if (!auth) {
     auth = getAuth(firebaseApp());
+    auth.languageCode = "pt-BR"; // e-mails do Firebase (ex.: recuperação de senha) em português
     if (useEmulator) connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
   }
   return auth;
